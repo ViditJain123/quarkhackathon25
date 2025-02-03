@@ -54,3 +54,6 @@ class SpeechService:
         except Exception as e:
             self.logger.error(f"Error in text to speech conversion: {str(e)}")
             raise
+class TextResponse(BaseModel):
+    response: str
+    detected_language: str
