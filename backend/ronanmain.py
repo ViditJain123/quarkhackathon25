@@ -1,23 +1,4 @@
-# app/services/llm_service.py
-import requests
 
-class LlamaService:
-    
-        
-        
-    async def generate_response(self, prompt: str, context: str) -> str:
-        full_prompt = f"""Context: {context}\n\nQuestion: {prompt}\n\nAnswer:"""
-        
-        response = requests.post(
-            self.api_url,
-            json={
-                "model": "llama2",
-                "prompt": full_prompt,
-                "stream": False
-            }
-        )
-        return response.json()['response']
-    
 import os
 import json
 from typing import List
@@ -154,3 +135,78 @@ def save_data(data):
         json.dump(data_to_save, f)
 
 user_prompts = load_data()
+
+# def can_user_ask(user_id):
+#     today = datetime.now().date()
+
+#     if user_id == "f20221077@goa.bits-pilani.ac.in":
+#         return True
+#     if user_id in user_prompts:
+#         last_date, count = user_prompts[user_id]
+
+#         if last_date != today:
+#             user_prompts[user_id] = (today, 1)
+#             save_data(user_prompts)
+#             return True
+#         elif count < 5:
+#             user_prompts[user_id] = (today, count + 1)
+#             save_data(user_prompts)
+#             return True
+#         else:
+#             return False  # User has exceeded the limit
+#     else:
+#         user_prompts[user_id] = (today, 1)
+#         save_data(user_prompts)
+#         return True
+
+class QueryRequest(BaseModel):
+    user_id: str
+    question: str
+
+@app.post("/ask")
+async def ask(request: QueryRequest):
+    # if not can_user_ask(request.user_id):
+    #     raise HTTPException(status_code=429, detail="Prompt limit exceeded")
+
+    user_id = request.user_id
+
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No user logged in")
+
+    query = request.question
+    if not query:
+        raise HTTPException(status_code=400, detail="No question provided")
+    
+    word_count = len(query.split())
+    if word_count > 60:
+        raise HTTPException(status_code=453, detail="Input word limit is 60")
+
+    # Generate response using Gemini
+    try:
+        answer = generate_response(user_id, query)
+    except Exception as e:
+        logging.error(f"Error generating response: {e}")
+        raise HTTPException(status_code=500, detail="Error generating response from Gemini API.")
+
+    return {"answer": answer}
+
+
+def start_observer():
+    # event_handler = EmbeddingFileHandler()
+    observer = Observer()
+    # observer.schedule(event_handler, path='data', recursive=True)
+    observer.start()
+    logging.info("Started file observer for embeddings.")
+    return observer
+
+def main():
+    observer = start_observer()
+    try:
+        import uvicorn
+        uvicorn.run(app, host='0.0.0.0', port=int(os.environ.get("PORT", 8000)))
+    except KeyboardInterrupt:
+        observer.stop()
+    observer.join()
+
+if __name__ == "__main__":
+    main()
