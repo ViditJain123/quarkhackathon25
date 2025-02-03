@@ -110,67 +110,70 @@ atexit.register(save_user_memories)
 # ----------------------------
 # Response Generation Function
 # ----------------------------
-async def generate_response(user_id, question):
+
+class LlamaService:
+    async def generate_response( question:str, context:str) -> str:
+        """
+        Generate a response using Gemini's GenerativeModel with the relevant context and user memory.
+        """
+        user_id = "a"
+        # Retrieve or initialize user memory using our custom SimpleConversationBufferMemory
+        if user_id not in user_memories:
+            user_memories[user_id] = SimpleConversationBufferMemory(memory_key='chat_history', k=5)
+        
+        memory = user_memories[user_id]
+        
+        # Retrieve conversation history
+        chat_history = memory.load_memory_variables({"input": question})
+        messages = chat_history.get('chat_history', [])
+        
+        # Format the conversation history into a readable text block
+        history_text = ""
+        for msg in messages:
+            if msg.type == "human":
+                history_text += f"User: {msg.content}\n"
+            elif msg.type == "ai":
+                history_text += f"Assistant: {msg.content}\n"
+        
+        # Retrieve relevant context from your vector store (or other source)
+        # Here, we're using a hard-coded example
+        # context = "Quark is the technical fest of BITS Goa. It will happen on 7th Feb."
+        logging.info(f"Retrieved context for user {user_id}: {context}")
+        
+        # Construct the prompt using the context and conversation history
+        prompt = f"""
+    You are an assistant for answering questions based on the context provided.
+    Answer concisely and only based on the context provided.
+
+    Context:
+    {context}
+
+    Conversation History:
+    {history_text}
+
+    User: {question}
+
+    Assistant:
     """
-    Generate a response using Gemini's GenerativeModel with the relevant context and user memory.
-    """
-    # Retrieve or initialize user memory using our custom SimpleConversationBufferMemory
-    if user_id not in user_memories:
-        user_memories[user_id] = SimpleConversationBufferMemory(memory_key='chat_history', k=5)
-    
-    memory = user_memories[user_id]
-    
-    # Retrieve conversation history
-    chat_history = memory.load_memory_variables({"input": question})
-    messages = chat_history.get('chat_history', [])
-    
-    # Format the conversation history into a readable text block
-    history_text = ""
-    for msg in messages:
-        if msg.type == "human":
-            history_text += f"User: {msg.content}\n"
-        elif msg.type == "ai":
-            history_text += f"Assistant: {msg.content}\n"
-    
-    # Retrieve relevant context from your vector store (or other source)
-    # Here, we're using a hard-coded example
-    context = "Quark is the technical fest of BITS Goa. It will happen on 7th Feb."
-    logging.info(f"Retrieved context for user {user_id}: {context}")
-    
-    # Construct the prompt using the context and conversation history
-    prompt = f"""
-You are an assistant for answering questions based on the context provided.
-Answer concisely and only based on the context provided.
-
-Context:
-{context}
-
-Conversation History:
-{history_text}
-
-User: {question}
-
-Assistant:
-"""
-    print(prompt)
-    
-    try:
-        # Generate the response using ollama's chat function
-        response: ChatResponse = chat(model='llama3.2', messages=[
-            {
-                'role': 'user',
-                'content': prompt,
-            },
-        ])
-        answer = response['message']['content']
-    except Exception as e:
-        logging.error(f"Error generating response with Gemini: {e}")
-        raise e
-    
-    # Update conversation memory with the latest interaction
-    memory.save_context({"input": question}, {"output": answer})
-    
-    return answer
+        print(prompt)
+        
+        try:
+            # Generate the response using ollama's chat function
+            response: ChatResponse = chat(model='llama3.2', messages=[
+                {
+                    'role': 'user',
+                    'content': prompt,
+                },
+            ])
+            answer = response['message']['content']
+        except Exception as e:
+            logging.error(f"Error generating response with Gemini: {e}")
+            raise e
+        
+        # Update conversation memory with the latest interaction
+        memory.save_context({"input": question}, {"output": answer})
+        
+        return answer
 
 # ----------------------------
 # Data Loading and Saving
