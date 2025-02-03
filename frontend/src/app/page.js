@@ -64,7 +64,41 @@ export default function ChatPage() {
     }
   };
 
-  // Updated startRecording function to download as .mp4 to laptop
+  // New uploadAudio function as provided
+  const uploadAudio = async (chunks) => {
+    try {
+      const blob = new Blob(chunks, { type: 'video/mp4' });
+      const formData = new FormData();
+      formData.append('file', blob, 'recording.mp4');
+      
+      const response = await fetch('http://localhost:8000/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Convert the audio_content (base64) back to audio and play it
+      const audioBlob = new Blob(
+        [Uint8Array.from(atob(data.audio_content), c => c.charCodeAt(0))],
+        { type: 'audio/mp3' }
+      );
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audio.play();
+      
+      return data;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
+  };
+
+  // Updated startRecording function to use uploadAudio
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -73,17 +107,9 @@ export default function ChatPage() {
       
       recorder.ondataavailable = (e) => chunks.push(e.data);
       recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/mp4' });
-        // Create a temporary URL for the blob and trigger a download
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = 'recording.mp4';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        uploadAudio(chunks)
+          .then(data => console.log('Uploaded file:', data))
+          .catch(err => console.error('Upload failed:', err));
       };
 
       recorder.start();
