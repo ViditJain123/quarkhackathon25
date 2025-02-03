@@ -143,7 +143,8 @@ class LlamaService:
         # Construct the prompt using the context and conversation history
         prompt = f"""
     You are an assistant for answering questions based on the context provided.
-    Answer concisely and only based on the context provided.
+    Answer based on the context provided.
+    Do not mention the word context in the answer.
 
     Context:
     {context}
@@ -167,7 +168,7 @@ class LlamaService:
             ])
             answer = response['message']['content']
         except Exception as e:
-            logging.error(f"Error generating response with Gemini: {e}")
+            logging.error(f"Error generating response with Llama: {e}")
             raise e
         
         # Update conversation memory with the latest interaction
