@@ -1,13 +1,13 @@
 # app/models/schemas.py
 from pydantic import BaseModel
 from typing import Optional
-from fastapi import UploadFile
 
 class QueryRequest(BaseModel):
     prompt: Optional[str] = None
-    
-    class Config:
-        from_attributes = True
+
+class TextResponse(BaseModel):
+    response: str
+    detected_language: str
 
 class AudioResponse(BaseModel):
     audio_content: bytes

@@ -1,3 +1,4 @@
+# app/services/embedding_service.py
 import os
 from pathlib import Path
 import PyPDF2
@@ -8,6 +9,8 @@ from tqdm import tqdm
 import re
 import nltk
 from nltk.tokenize import sent_tokenize
+from sklearn.metrics.pairwise import cosine_similarity
+import logging
 nltk.download('punkt')
 nltk.download('punkt_tab')
 
@@ -17,8 +20,11 @@ class PDFEmbeddingGenerator:
         self.chunk_size = chunk_size
         self.companies = ['LIC', 'Maxlife']
         self.categories = ['Health Plans', 'Insurance Plans', 'Pension Plans']
-        # Download pre-trained FastText model
-        self.model = fasttext.load_model('cc.en.300.bin')
+        
+        # Update model path to match EmbeddingSearcher
+        base_dir = Path(__file__).resolve().parent.parent  # This gets us to 'app' directory
+        model_path = base_dir / 'models' / 'cc.en.300.bin'
+        self.model = fasttext.load_model(str(model_path))
         
     def preprocess_text(self, text):
         """Clean and preprocess text"""
@@ -110,10 +116,75 @@ class PDFEmbeddingGenerator:
         metadata = df.drop('embedding', axis=1)
         metadata.to_csv(output_dir / 'metadata.csv', index=False)
 
+class EmbeddingSearcher:
+    def __init__(self, embeddings_dir):
+        self.embeddings_dir = Path(embeddings_dir)
+        self.logger = logging.getLogger(__name__)
+        
+        try:
+            # Load embeddings and metadata
+            self.embeddings = np.load(self.embeddings_dir / 'embeddings.npy')
+            self.metadata = pd.read_csv(self.embeddings_dir / 'metadata.csv')
+            
+            # Update model path to point to app/models
+            base_dir = Path(__file__).resolve().parent.parent  # This gets us to 'app' directory
+            model_path = base_dir / 'models' / 'cc.en.300.bin'
+            
+            if not model_path.exists():
+                self.logger.error(f"FastText model not found at {model_path}")
+                raise FileNotFoundError(f"FastText model not found at {model_path}")
+                
+            self.model = fasttext.load_model(str(model_path))
+            
+        except Exception as e:
+            self.logger.error(f"Error initializing EmbeddingSearcher: {str(e)}")
+            raise
+
+
+    def search(self, query: str, top_k: int = 3) -> list:
+        """
+        Search for most similar chunks to the query
+        Args:
+            query (str): Search query
+            top_k (int): Number of results to return
+        Returns:
+            list: Top k results with their metadata and similarity scores
+        """
+        try:
+            # Generate embedding for the query
+            query_embedding = self.model.get_sentence_vector(query)
+            
+            # Reshape for sklearn
+            query_embedding = query_embedding.reshape(1, -1)
+            
+            # Calculate cosine similarity
+            similarities = cosine_similarity(query_embedding, self.embeddings)[0]
+            
+            # Get top k indices
+            top_indices = np.argsort(similarities)[-top_k:][::-1]
+            
+            # Prepare results
+            results = []
+            for idx in top_indices:
+                result = {
+                    'similarity': float(similarities[idx]),
+                    'text': self.metadata.iloc[idx]['text'],
+                    'company': self.metadata.iloc[idx]['company'],
+                    'category': self.metadata.iloc[idx]['category'],
+                    'file_name': self.metadata.iloc[idx]['file_name']
+                }
+                results.append(result)
+            
+            return results
+            
+        except Exception as e:
+            self.logger.error(f"Error in similarity search: {str(e)}")
+            return []
+
 def main():
     # Set up paths
     base_dir = Path('Hackathon')
-    output_dir = Path('embeddings_output')
+    output_dir = Path('../../embeddings_output')
     
     # Initialize generator
     generator = PDFEmbeddingGenerator(base_dir)
