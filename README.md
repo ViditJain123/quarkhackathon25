@@ -52,15 +52,6 @@ cd backend
 pip install -r requirements
 ```
 
-### ⚙️ Configuration
-Create a `.env` file in the root directory:
-```env
-APP_NAME="Insurance RAG API"
-APP_VERSION="1.0.0"
-LOG_LEVEL=INFO
-LOG_FILE=app.log
-```
-
 ## 🚀 Usage Guide
 
 ### 🦙 Running the Ollama server (open-source LLM)
@@ -89,17 +80,6 @@ uvicorn app.main:app --reload
 cd frontend
 npm i
 npm run dev
-```
-
-3️⃣ Generate embeddings (first-time setup):
-```bash
-python app/services/embedding_service.py
-```
-
-### 🧪 Testing
-Test the RAG service:
-```bash
-python test_rag.py
 ```
 
 ## 🏛️ Architecture Overview
