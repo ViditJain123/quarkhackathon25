@@ -1,23 +1,16 @@
-# api.py
 
 import os
 import json
 from typing import List
-# import openai
 from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-# from langchain.embeddings.openai import OpenAIEmbeddings
-# from langchain.vectorstores import FAISS
 from langchain.memory import ConversationBufferMemory
-# import tiktoken
 import nest_asyncio
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-# from dotenv import load_dotenv
 import logging
 import pickle
-# import google.generativeai as genai
 import atexit
 from ollama import chat
 from ollama import ChatResponse
@@ -143,28 +136,28 @@ def save_data(data):
 
 user_prompts = load_data()
 
-def can_user_ask(user_id):
-    today = datetime.now().date()
+# def can_user_ask(user_id):
+#     today = datetime.now().date()
 
-    if user_id == "f20221077@goa.bits-pilani.ac.in":
-        return True
-    if user_id in user_prompts:
-        last_date, count = user_prompts[user_id]
+#     if user_id == "f20221077@goa.bits-pilani.ac.in":
+#         return True
+#     if user_id in user_prompts:
+#         last_date, count = user_prompts[user_id]
 
-        if last_date != today:
-            user_prompts[user_id] = (today, 1)
-            save_data(user_prompts)
-            return True
-        elif count < 5:
-            user_prompts[user_id] = (today, count + 1)
-            save_data(user_prompts)
-            return True
-        else:
-            return False  # User has exceeded the limit
-    else:
-        user_prompts[user_id] = (today, 1)
-        save_data(user_prompts)
-        return True
+#         if last_date != today:
+#             user_prompts[user_id] = (today, 1)
+#             save_data(user_prompts)
+#             return True
+#         elif count < 5:
+#             user_prompts[user_id] = (today, count + 1)
+#             save_data(user_prompts)
+#             return True
+#         else:
+#             return False  # User has exceeded the limit
+#     else:
+#         user_prompts[user_id] = (today, 1)
+#         save_data(user_prompts)
+#         return True
 
 class QueryRequest(BaseModel):
     user_id: str
@@ -172,8 +165,8 @@ class QueryRequest(BaseModel):
 
 @app.post("/ask")
 async def ask(request: QueryRequest):
-    if not can_user_ask(request.user_id):
-        raise HTTPException(status_code=429, detail="Prompt limit exceeded")
+    # if not can_user_ask(request.user_id):
+    #     raise HTTPException(status_code=429, detail="Prompt limit exceeded")
 
     user_id = request.user_id
 
