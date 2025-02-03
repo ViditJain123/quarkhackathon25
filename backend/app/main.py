@@ -8,6 +8,7 @@ from app.services.speech_service import SpeechService
 from app.services.translation_service import TranslationService
 from app.utils.helpers import handle_error, timer_decorator, validate_language_code
 from app.config import settings
+from app.services.booking_system import process_booking
 import logging
 import base64
 
@@ -134,6 +135,19 @@ async def process_text_query(request: QueryRequest):
     
     logger.info(f"Received text query: {request.prompt[:100]}...")
     
+    if "book" in request.prompt.lower():
+        # If the prompt is exactly "yes" or "no", treat it as a confirmation response.
+        if request.prompt.lower().strip() in ["yes", "no"]:
+            # Call the booking function with the confirmation provided
+            booking_response = process_booking(request.prompt, confirmation=request.prompt.lower().strip())
+        else:
+            # Initial booking request – no confirmation yet.
+            booking_response = process_booking(request.prompt)
+        return TextResponse(
+            response=booking_response,
+            detected_language="en"  # Adjust as needed if you want to detect/translate the language
+        )
+
     # Detect language
     source_lang = translation_service.detect_language(request.prompt)
     
