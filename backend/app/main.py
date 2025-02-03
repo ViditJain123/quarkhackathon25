@@ -44,18 +44,32 @@ async def process_audio_upload(
     logger.info(f"Received audio upload: {file.filename}")
     
     # Validate file type
-    if file.content_type != 'video/mp4':
+    valid_audio_types = ['audio/mpeg', 'audio/mp3', 'audio/wav']
+    if file.content_type not in valid_audio_types:
         raise HTTPException(
             status_code=400,
-            detail="Invalid file type. Only MP4 files are accepted."
+            detail="Invalid file type. Only MP3/WAV files are accepted."
         )
     
     try:
         # Read audio content
         audio_content = await file.read()
+        file_size = len(audio_content)
+        
+        # Basic file size validation (e.g., max 10MB)
+        if file_size > 10 * 1024 * 1024:  # 10MB
+            raise HTTPException(
+                status_code=400,
+                detail="File size too large. Maximum size is 10MB."
+            )
         
         # Convert speech to text
         transcript = await speech_service.speech_to_text(audio_content)
+        if not transcript:
+            raise HTTPException(
+                status_code=400,
+                detail="Could not transcribe audio. Please ensure clear audio quality."
+            )
         logger.info(f"Transcribed text: {transcript[:100]}...")
         
         # Detect language
@@ -81,18 +95,26 @@ async def process_audio_upload(
             final_response, source_lang
         )
         
+        if not audio_response:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to generate audio response"
+            )
+        
         return AudioResponse(
             audio_content=audio_response,
             detected_language=source_lang
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error processing audio: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error processing audio: {str(e)}"
         )
-
+    
 @app.post("/api/query", response_model=TextResponse)
 @handle_error
 @timer_decorator
