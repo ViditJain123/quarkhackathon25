@@ -1,10 +1,12 @@
 # app/main.py
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from .models.schemas import AudioResponse, TextResponse, QueryRequest
-from .services import TranslationService, RAGService, LlamaService, SpeechService
-from .utils.helpers import handle_error, timer_decorator, validate_language_code
-from .config import settings
+from app.models.schemas import AudioResponse, TextResponse, QueryRequest  
+from app.services.rag_service import RAGService
+from app.services.llm_service import LlamaService
+from app.services.speech_service import SpeechService
+from app.utils.helpers import handle_error, timer_decorator, validate_language_code
+from app.config import settings
 import logging
 
 app = FastAPI(
