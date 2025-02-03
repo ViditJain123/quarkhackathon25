@@ -1,55 +1,58 @@
-# Multilingual Insurance RAG System (Quark Hackathon 2025)
+# 🚀 Multilingual Insurance RAG System (Quark Hackathon 2025)
 
-## Authors
-- Amogh Malagi, Naitik Verma, Ronan Coutinho, Vidit Jain
-- Date: 3/10/2025
+## 👨‍💻 Authors
+- **Amogh Malagi, Naitik Verma, Ronan Coutinho, Vidit Jain**
+- 📅 Date: **3/10/2025**
 
-## Introduction
-This project presents a fully open-source, cloud-agnostic multilingual Retrieval-Augmented Generation (RAG) system for insurance documentation. Designed to support multiple Indian languages, the system enables both text and voice-based interactions while ensuring privacy-friendly, cost-effective deployment without reliance on proprietary cloud platforms.
-By integrating open-source LLMs (LLaMA) and leveraging FastAPI, FastText, Deep Translate, the system delivers context-aware responses with enhanced accuracy.
-This chatbot not only facilitates real-time translation and multilingual conversations, but also supports essential transactional services such as policy inquiries and service requests, making it a practical and scalable solution for the insurance sector.
+## 📝 Introduction
+This project presents a fully **open-source**, **cloud-agnostic** multilingual **Retrieval-Augmented Generation (RAG)** system for **insurance documentation**. Designed to support **multiple Indian languages**, the system enables both **text and voice-based interactions** while ensuring **privacy-friendly, cost-effective deployment** without reliance on proprietary cloud platforms.
 
-### Key Features
-- Multilingual support for 9 Indian languages
-- Voice and text input processing
-- PDF document processing and embedding generation
-- Context-aware responses using RAG
-- Real-time translation
+By integrating **open-source LLMs (LLaMA)** and leveraging **FastAPI, FastText, Deep Translate**, the system delivers **context-aware responses with enhanced accuracy**.
 
-### Tech Stack
-- FastAPI for backend
-- FastText for embeddings
-- Deep Translate for language translation
-- LLaMA 3.1 (via Ollama) for response generation
-- React for frontend
+This chatbot not only facilitates **real-time translation** and **multilingual conversations**, but also supports essential **transactional services** such as **policy inquiries** and **service requests**, making it a practical and scalable solution for the insurance sector. 🏦💬
 
-## Installation & Setup
+### 🌟 Key Features
+- 🌍 **Multilingual support** for **9 Indian languages**
+- 🎙️ **Voice and text input processing**
+- 📄 **PDF document processing** and embedding generation
+- 🧠 **Context-aware responses using RAG**
+- 🔄 **Real-time translation**
 
-### Prerequisites
-- Python 3.13+
-- FastText pre-trained model (cc.en.300.bin)
-- Node.js and npm for frontend
-- Ollama installed and running
+### 🛠️ Tech Stack
+- 🚀 **FastAPI** for backend
+- 🏷️ **FastText** for embeddings
+- 🌐 **Deep Translate** for language translation
+- 🦙 **LLaMA 3.1 (via Ollama)** for response generation
+- ⚛️ **React** for frontend
 
-### Installation Steps
-1. Clone the repository:
+## ⚙️ Installation & Setup
+
+### 📌 Prerequisites
+- 🐍 **Python 3.13+**
+- 📂 **FastText pre-trained model (cc.en.300.bin)**
+- 💻 **Node.js and npm for frontend**
+- 🦙 **Ollama installed and running**
+
+### 📥 Installation Steps
+1️⃣ Clone the repository:
 ```bash
-git clone https://github.com/[username]/quarkhackathon25.git
+git clone https://github.com/ViditJain123/quarkhackathon25.git
 cd quarkhackathon25
 ```
 
-2. Create and activate virtual environment:
+2️⃣ Create and activate virtual environment:
 ```bash
 python -m venv rag_env
 source rag_env/bin/activate  # On Windows: rag_env\Scripts\activate
 ```
 
-3. Install dependencies:
+3️⃣ Install dependencies:
 ```bash
-pip install fastapi uvicorn pydantic-settings pydantic==2.5.2 deep-translator langdetect PyPDF2 numpy pandas tqdm nltk scikit-learn
+cd backend
+pip install -r requirements
 ```
 
-### Configuration
+### ⚙️ Configuration
 Create a `.env` file in the root directory:
 ```env
 APP_NAME="Insurance RAG API"
@@ -58,29 +61,50 @@ LOG_LEVEL=INFO
 LOG_FILE=app.log
 ```
 
-## Usage Guide
+## 🚀 Usage Guide
 
-### Running the Project
-1. Start the FastAPI server:
+### 🦙 Running the Ollama server (open-source LLM)
+📥 Download Ollama from [Ollama Official Site](https://ollama.com/download)
+
+Run the following commands in terminal:
+```bash
+ollama serve
+ollama run llama3.1
+```
+To stop the server:
+```bash
+ollama stop llama3.1
+```
+
+### ▶️ Running the Project (after creating your environment)
+
+1️⃣ Start the FastAPI server:
 ```bash
 cd backend
 uvicorn app.main:app --reload
 ```
 
-2. Generate embeddings (first time setup):
+2️⃣ Start the frontend server:
+```bash
+cd frontend
+npm i
+npm run dev
+```
+
+3️⃣ Generate embeddings (first-time setup):
 ```bash
 python app/services/embedding_service.py
 ```
 
-### Testing
+### 🧪 Testing
 Test the RAG service:
 ```bash
 python test_rag.py
 ```
 
-## Architecture Overview
+## 🏛️ Architecture Overview
 
-### Directory Structure
+### 📂 Directory Structure
 ```
 backend/
 ├── app/
@@ -104,19 +128,19 @@ backend/
 └── models/
 ```
 
-### Core Components
-1. **Embedding Service**: Processes PDFs and generates FastText embeddings
-2. **RAG Service**: Handles context retrieval and query processing
-3. **Translation Service**: Manages language detection and translation
-4. **Speech Service**: Handles voice input/output processing
-5. **LLM Service**: Interfaces with LLaMA for response generation
+### 🔑 Core Components
+📄 **Embedding Service** : Processes PDFs and generates FastText embeddings  
+🔍 **RAG Service** : Handles context retrieval and query processing  
+🌎 **Translation Service** : Manages language detection and translation  
+🎤 **Speech Service** : Handles voice input/output processing  
+🧠 **LLM Service** : Interfaces with LLaMA for response generation  
 
-## API Documentation
+## 📡 API Documentation
 
-### Endpoints
+### 🔌 Endpoints
 
-#### POST /api/upload
-Handles voice input processing
+#### 📤 `POST /api/upload`
+Handles **voice input processing** 🎤
 ```json
 Request:
 - FormData with 'file' field (audio/mpeg)
@@ -128,8 +152,8 @@ Response:
 }
 ```
 
-#### POST /api/query
-Handles text input processing
+#### 💬 `POST /api/query`
+Handles **text input processing** 📝
 ```json
 Request:
 {
@@ -143,8 +167,7 @@ Response:
 }
 ```
 
-### References
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [FastText Documentation](https://fasttext.cc/)
-- [Google Cloud Translation API](https://cloud.google.com/translate)
-- [LLaMA Documentation](https://github.com/facebookresearch/llama)
+### 📚 References
+- 📘 [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- 📗 [FastText Documentation](https://fasttext.cc/)
+- 🦙 [LLaMA Documentation](https://github.com/facebookresearch/llama)
