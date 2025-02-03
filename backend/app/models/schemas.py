@@ -12,3 +12,5 @@ class TextResponse(BaseModel):
 class AudioResponse(BaseModel):
     audio_content: bytes
     detected_language: str
+    question: Optional[str] = None
+    llm_response: Optional[str] = None

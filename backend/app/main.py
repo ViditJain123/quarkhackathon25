@@ -9,6 +9,7 @@ from app.services.translation_service import TranslationService
 from app.utils.helpers import handle_error, timer_decorator, validate_language_code
 from app.config import settings
 import logging
+import base64
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -16,10 +17,10 @@ app = FastAPI(
     version=settings.APP_VERSION
 )
 
-# Add CORS middleware
+# Updated CORS middleware configuration with explicit allowed origin
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with your frontend URL
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,7 +34,7 @@ speech_service = SpeechService()
 
 logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL))
 logger = logging.getLogger(__name__)
-
+    
 @app.post("/api/upload", response_model=AudioResponse)
 @handle_error
 @timer_decorator
@@ -90,7 +91,7 @@ async def process_audio_upload(
             english_response, source_lang
         )
         
-        # Convert response to speech
+        # Convert response to speech (raw bytes)
         audio_response = await speech_service.text_to_speech(
             final_response, source_lang
         )
@@ -101,9 +102,14 @@ async def process_audio_upload(
                 detail="Failed to generate audio response"
             )
         
+        # Convert the raw audio bytes to a base64 encoded string to avoid UTF-8 errors.
+        encoded_audio = base64.b64encode(audio_response).decode('utf-8')
+        
         return AudioResponse(
-            audio_content=audio_response,
-            detected_language=source_lang
+            audio_content=encoded_audio,
+            detected_language=source_lang,
+            question=transcript,            # new field with original question
+            llm_response=final_response       # new field with text response
         )
         
     except HTTPException:

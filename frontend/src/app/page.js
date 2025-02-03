@@ -46,7 +46,8 @@ export default function ChatPage() {
     }, 10); // Adjust speed as needed
   };
 
-  const handleKeyDown = (e) => {
+  // Updated handleKeyDown function to query API instead of using a hardcoded response
+  const handleKeyDown = async (e) => {
     if (e.key === "Enter" && inputValue.trim() !== "") {
       const userMessage = { sender: 'user', text: inputValue.trim() };
       setMessages(prev => [...prev, userMessage]);
@@ -57,21 +58,34 @@ export default function ChatPage() {
       }
 
       setIsThinking(true);
-      setTimeout(() => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: userMessage.text })
+        });
+        const data = await response.json();
         setIsThinking(false);
-        simulateStreaming("This is a hardcoded response that will be streamed character by character, similar to ChatGPT's behavior.");
-      }, 5000);
+        // Assuming the API returns an object with a 'response' key containing the text
+        simulateStreaming(data.response);
+      } catch (error) {
+        console.error('Error querying API:', error);
+        setIsThinking(false);
+        simulateStreaming("An error occurred while fetching response.");
+      }
     }
   };
 
-  // New uploadAudio function as provided
+  // Updated uploadAudio function to generate an mp3 file
   const uploadAudio = async (chunks) => {
     try {
-      const blob = new Blob(chunks, { type: 'video/mp4' });
+      // Changed blob type to 'audio/mp3'
+      const blob = new Blob(chunks, { type: 'audio/mp3' });
       const formData = new FormData();
-      formData.append('file', blob, 'recording.mp4');
+      // Changed filename from 'recording.mp4' to 'recording.mp3'
+      formData.append('file', blob, 'recording.mp3');
       
-      const response = await fetch('http://localhost:8000/api/upload', {
+      const response = await fetch('http://127.0.0.1:8000/api/upload', {
         method: 'POST',
         body: formData,
       });
@@ -106,10 +120,18 @@ export default function ChatPage() {
       const chunks = [];
       
       recorder.ondataavailable = (e) => chunks.push(e.data);
-      recorder.onstop = () => {
-        uploadAudio(chunks)
-          .then(data => console.log('Uploaded file:', data))
-          .catch(err => console.error('Upload failed:', err));
+      recorder.onstop = async () => {
+        try {
+          const data = await uploadAudio(chunks);
+          // Move input to bottom after voice input
+          if (inputPosition === 'center') setInputPosition('bottom');
+          // Add the question from audio input as a user message.
+          setMessages(prev => [...prev, { sender: 'user', text: data.question }]);
+          // Animate the LLM response as bot message.
+          simulateStreaming(data.llm_response);
+        } catch (err) {
+          console.error('Upload failed:', err);
+        }
       };
 
       recorder.start();
@@ -130,51 +152,72 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-gray-900 text-gray-100">
-      <div className="absolute inset-0 overflow-y-auto p-4">
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`mb-4 flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
+    <div
+      className="relative min-h-screen text-gray-200 font-sans"
+      style={{
+        backgroundImage: 'url(https://pe-images.s3.amazonaws.com/basics/cc/gradients/essentials/radial-gradient-reversed.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }}
+    >
+      {/* Updated chat container to wrap messages in a container matching input box width */}
+      <div className="absolute inset-0 flex flex-col justify-center p-4 overflow-y-auto">
+        <div className="mx-auto w-11/12 max-w-3xl">
+          {messages.map((msg, idx) => (
             <div
-              className={`max-w-xs md:max-w-md lg:max-w-lg px-4 py-2 rounded-lg ${
-                msg.sender === 'user'
-                  ? 'bg-gray-700 text-gray-100'
-                  : 'bg-gray-800 text-gray-200'
-              }`}
+              key={idx}
+              // Adjusted margin bottom from mb-2 to mb-1 for closer spacing
+              className={`mb-1 flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              {msg.text}
+              <div
+                // Reduced max-width to a fixed value for closer alignment
+                className={`px-4 py-3 rounded-lg max-w-md 
+                  ${msg.sender === 'user' 
+                    ? 'bg-blue-700 text-white' 
+                    : 'bg-[#1f1f24] text-gray-300'
+                  }`}
+              >
+                {msg.text}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
 
-        {isThinking && (
-          <div className="mb-4 flex justify-start">
-            <div className="max-w-xs md:max-w-md lg:max-w-lg px-4 py-2 rounded-lg bg-gray-800 text-gray-300 italic">
-              {thinkingText}
+          {isThinking && (
+            <div className="mb-4 flex justify-start">
+              <div className="max-w-xs md:max-w-md lg:max-w-lg px-4 py-2 rounded-lg bg-gray-800 text-gray-300 italic">
+                {thinkingText}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {isStreaming && (
-          <div className="mb-4 flex justify-start">
-            <div className="max-w-xs md:max-w-md lg:max-w-lg px-4 py-2 rounded-lg bg-gray-800 text-gray-200">
-              {streamingText}
-              <span className="animate-pulse text-gray-400">▊</span>
+          {isStreaming && (
+            <div className="mb-4 flex justify-start">
+              <div className="max-w-xs md:max-w-md lg:max-w-lg px-4 py-2 rounded-lg bg-gray-800 text-gray-200">
+                {streamingText}
+                <span className="animate-pulse text-gray-400">▊</span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <div
         className={`
-          absolute left-1/2 transform -translate-x-1/2 w-11/12 max-w-3xl transition-all duration-500 ease-in-out
+          absolute left-1/2 transform -translate-x-1/2 w-11/12 max-w-3xl 
+          transition-all duration-500 ease-in-out
           ${inputPosition === 'center'
             ? 'top-1/2 -translate-y-1/2'
             : 'bottom-4'}
         `}
       >
+        {/* Conditional header: displayed until a user prompt is sent */}
+        {(!messages.some(msg => msg.sender === 'user')) && (
+          <div className="flex flex-col items-center justify-center mb-[100px]">
+            <h1 className="text-4xl font-bold text-white">Insurance GPT</h1>
+            <span className="text-xl text-white opacity-90">Your AI-powered insurance assistant</span>
+          </div>
+        )}
+
         <form onSubmit={(e) => {
           e.preventDefault();
           handleKeyDown({ key: 'Enter' });
@@ -182,11 +225,12 @@ export default function ChatPage() {
           <div className="relative w-full">
             <input
               type="text"
-              placeholder="Ask anything..."
+              placeholder="Type your prompt..."
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="w-full p-4 pr-12 rounded-lg bg-gray-800 text-gray-100 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600 shadow-lg placeholder-gray-500"
+              className="w-full p-4 pr-12 rounded-lg bg-[#1f1f24] text-gray-200 focus:outline-none 
+                         focus:ring-2 focus:ring-blue-600 shadow-lg placeholder-gray-500"
             />
             {/* Embedded recording button inside input box */}
             <button
