@@ -1,6 +1,6 @@
 # app/__init__.py
 from fastapi import FastAPI
-from .config import settings
+from app.config import settings  # Updated import path
 
 def create_app() -> FastAPI:
     app = FastAPI(
