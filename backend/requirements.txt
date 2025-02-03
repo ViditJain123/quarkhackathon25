@@ -4,6 +4,8 @@ ollama
 fastapi
 uvicorn
 pyngrok
-langchain
 nest-asyncio
 watchdog
+pydantic_settings
+PyPDF2
+fasttext

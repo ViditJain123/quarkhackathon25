@@ -12,6 +12,7 @@ export default function ChatPage() {
   const [streamingText, setStreamingText] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState(null);
 
   useEffect(() => {
     let interval;
@@ -63,19 +64,69 @@ export default function ChatPage() {
     }
   };
 
-  const startRecording = async () => {
+  // New uploadAudio function as provided
+  const uploadAudio = async (chunks) => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      setIsRecording(true);
-      // Add actual recording logic here
-    } catch (err) {
-      console.error('Error accessing microphone:', err);
+      const blob = new Blob(chunks, { type: 'video/mp4' });
+      const formData = new FormData();
+      formData.append('file', blob, 'recording.mp4');
+      
+      const response = await fetch('http://localhost:8000/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Convert the audio_content (base64) back to audio and play it
+      const audioBlob = new Blob(
+        [Uint8Array.from(atob(data.audio_content), c => c.charCodeAt(0))],
+        { type: 'audio/mp3' }
+      );
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audio.play();
+      
+      return data;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
     }
   };
 
+  // Updated startRecording function to use uploadAudio
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks = [];
+      
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.onstop = () => {
+        uploadAudio(chunks)
+          .then(data => console.log('Uploaded file:', data))
+          .catch(err => console.error('Upload failed:', err));
+      };
+
+      recorder.start();
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+    } catch (err) {
+      console.error('Error recording audio:', err);
+    }
+  };
+
+  // New function to stop recording
   const stopRecording = () => {
-    setIsRecording(false);
-    // Add logic to stop recording and process audio
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      setIsRecording(false);
+    }
   };
 
   return (
@@ -137,15 +188,13 @@ export default function ChatPage() {
               onKeyDown={handleKeyDown}
               className="w-full p-4 pr-12 rounded-lg bg-gray-800 text-gray-100 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600 shadow-lg placeholder-gray-500"
             />
+            {/* Embedded recording button inside input box */}
             <button
               type="button"
               onClick={isRecording ? stopRecording : startRecording}
-              className={`absolute right-3 top-1/2 transform -translate-y-1/2 p-2 rounded-full 
-                ${isRecording 
-                  ? 'bg-red-500 hover:bg-red-600' 
-                  : 'text-gray-400 hover:text-gray-300'}`}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 rounded-full bg-blue-700 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-lg"
             >
-              <MicrophoneIcon className="h-5 w-5" />
+              <MicrophoneIcon className="h-5 w-5 text-white" />
             </button>
           </div>
           <button
