@@ -1,12 +1,19 @@
-# app/services/rag_service.py
-from .embedding_service import EmbeddingSearcher
-from typing import List
+# app/services/llm_service.py
+import requests
 
-class RAGService:
+class LlamaService:
     def __init__(self):
-        self.searcher = EmbeddingSearcher('embeddings_output')
-    
-    def get_relevant_context(self, query: str, top_k: int = 3) -> str:
-        results = self.searcher.search(query, top_k=top_k)
-        context = "\n".join([r['text'] for r in results])
-        return context
+        self.api_url = "http://localhost:11434/api/generate"
+        
+    async def generate_response(self, prompt: str, context: str) -> str:
+        full_prompt = f"""Context: {context}\n\nQuestion: {prompt}\n\nAnswer:"""
+        
+        response = requests.post(
+            self.api_url,
+            json={
+                "model": "llama2",
+                "prompt": full_prompt,
+                "stream": False
+            }
+        )
+        return response.json()['response']
