@@ -12,6 +12,7 @@ export default function ChatPage() {
   const [streamingText, setStreamingText] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState(null);
 
   useEffect(() => {
     let interval;
@@ -63,19 +64,43 @@ export default function ChatPage() {
     }
   };
 
+  // Updated startRecording function to download as .mp4 to laptop
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks = [];
+      
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/mp4' });
+        // Create a temporary URL for the blob and trigger a download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'recording.mp4';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      };
+
+      recorder.start();
+      setMediaRecorder(recorder);
       setIsRecording(true);
-      // Add actual recording logic here
     } catch (err) {
-      console.error('Error accessing microphone:', err);
+      console.error('Error recording audio:', err);
     }
   };
 
+  // New function to stop recording
   const stopRecording = () => {
-    setIsRecording(false);
-    // Add logic to stop recording and process audio
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      setIsRecording(false);
+    }
   };
 
   return (
@@ -137,15 +162,13 @@ export default function ChatPage() {
               onKeyDown={handleKeyDown}
               className="w-full p-4 pr-12 rounded-lg bg-gray-800 text-gray-100 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600 shadow-lg placeholder-gray-500"
             />
+            {/* Embedded recording button inside input box */}
             <button
               type="button"
               onClick={isRecording ? stopRecording : startRecording}
-              className={`absolute right-3 top-1/2 transform -translate-y-1/2 p-2 rounded-full 
-                ${isRecording 
-                  ? 'bg-red-500 hover:bg-red-600' 
-                  : 'text-gray-400 hover:text-gray-300'}`}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 rounded-full bg-blue-700 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-lg"
             >
-              <MicrophoneIcon className="h-5 w-5" />
+              <MicrophoneIcon className="h-5 w-5 text-white" />
             </button>
           </div>
           <button
