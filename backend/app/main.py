@@ -5,6 +5,7 @@ from app.models.schemas import AudioResponse, TextResponse, QueryRequest
 from app.services.rag_service import RAGService
 from app.services.llm_service import LlamaService
 from app.services.speech_service import SpeechService
+from app.services.translation_service import TranslationService
 from app.utils.helpers import handle_error, timer_decorator, validate_language_code
 from app.config import settings
 import logging
@@ -126,7 +127,7 @@ async def process_text_query(request: QueryRequest):
         english_response, source_lang
     )
     
-    return QueryResponse(
+    return TextResponse(
         response=final_response,
         detected_language=source_lang
     )

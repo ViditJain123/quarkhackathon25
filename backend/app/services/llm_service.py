@@ -112,7 +112,7 @@ atexit.register(save_user_memories)
 # ----------------------------
 
 class LlamaService:
-    async def generate_response( question:str, context:str) -> str:
+    async def generate_response(self, question: str, context: str) -> str:
         """
         Generate a response using Gemini's GenerativeModel with the relevant context and user memory.
         """
@@ -159,7 +159,7 @@ class LlamaService:
         
         try:
             # Generate the response using ollama's chat function
-            response: ChatResponse = chat(model='llama3.2', messages=[
+            response: ChatResponse = chat(model='llama3.1', messages=[
                 {
                     'role': 'user',
                     'content': prompt,
