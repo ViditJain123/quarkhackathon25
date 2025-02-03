@@ -196,6 +196,3 @@ def save_data(data):
         json.dump(data_to_save, f)
 
 user_prompts = load_data()
-
-# Example usage:
-print(generate_response("b", "What is it?"))
