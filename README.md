@@ -4,6 +4,8 @@
 - **Amogh Malagi, Naitik Verma, Ronan Coutinho, Vidit Jain**
 - 📅 Date: **3/10/2025**
 
+Link to the video demonstration: https://drive.google.com/file/d/16SrpiJPXX3bQUblUBrAciyV9_DHkQmAg/view?usp=drivesdk
+
 ## 📝 Introduction
 This project presents a fully **open-source**, **cloud-agnostic** multilingual **Retrieval-Augmented Generation (RAG)** system for **insurance documentation**. Designed to support **multiple Indian languages**, the system enables both **text and voice-based interactions** while ensuring **privacy-friendly, cost-effective deployment** without reliance on proprietary cloud platforms.
 
