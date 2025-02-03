@@ -1,17 +1,3 @@
-# app/models/schemas.py
-from pydantic import BaseModel
-from typing import Optional
-from fastapi import UploadFile
-
-class QueryRequest(BaseModel):
-    prompt: Optional[str] = None
-    
-    class Config:
-        from_attributes = True
-
-class AudioResponse(BaseModel):
-    audio_content: bytes
-    detected_language: str
 # app/services/speech_service.py
 import tempfile
 import os
@@ -68,6 +54,3 @@ class SpeechService:
         except Exception as e:
             self.logger.error(f"Error in text to speech conversion: {str(e)}")
             raise
-class TextResponse(BaseModel):
-    response: str
-    detected_language: str
