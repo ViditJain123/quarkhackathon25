@@ -1,4 +1,4 @@
 .env
 node_modules
-backend/cc.en.300.bin
+backend/app/models/cc.en.300.bin
 rag_env
